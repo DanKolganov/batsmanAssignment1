@@ -36,7 +36,7 @@ def createExtGraph(graph : dict, v_count : int) -> dict:
     return tmp_graph
 
 
-def largest_first_rask(graph : dict):
+def largest_first_coloring(graph : dict):
     sorted_vertices = sorted(graph.keys(), key=lambda v: len(graph[v]), reverse=True)
     print(sorted_vertices)
 
@@ -57,9 +57,9 @@ def largest_first_rask(graph : dict):
     return colors, len(set(colors.values()))
 
 
-def find_max_clique(graph : dict) -> list:
+def largest_first_cliques(graph : dict) -> list:
 
-    vertices = sorted(graph.keys(), key=lambda x: len(graph[x]), reverse=True)
+    vertices = list(graph.keys())
 
     print(f'sorted vertices = {vertices}')
 
@@ -68,10 +68,11 @@ def find_max_clique(graph : dict) -> list:
     count_cliques = 0
 
     while vertices:
+        vertices.sort(key=lambda x: len([v for v in graph[x] if v in vertices]), reverse=True)
 
         clique = []
         best_vertex = vertices[0]
-        candidates_per_clique = [x for x in vertices if x in graph[best_vertex]]
+        candidates_per_clique = [x for x in graph[best_vertex] if x in vertices]
         clique.append(best_vertex)
 
         while candidates_per_clique:
@@ -87,15 +88,61 @@ def find_max_clique(graph : dict) -> list:
     return cliques, count_cliques
 
 
+def min_degree_clique(graph : dict) -> list:
+    vertices = list(graph.keys())    
+
+    cliques = []
+    count_cliques = 0
+    
+    while vertices:
+        vertices.sort(key=lambda x: len([n for n in graph[x] if n in vertices]), reverse=True)
+
+        vertices_per_clique = vertices.copy()
+
+        while vertices_per_clique:
+            is_clique = vertices_per_clique.copy()
+
+            if check_clique(graph, is_clique):
+                cliques.append(is_clique)
+                count_cliques += 1
+                vertices = [item for item in vertices if item not in is_clique]
+                break
+            else:
+                vertices_per_clique = vertices_per_clique[:-1]
+
+    return cliques, count_cliques
+        
+
+def check_clique(graph : dict, vertices : list) -> bool:
+    for i in range(len(vertices)):
+        for j in range(i+1, len(vertices)):
+            if vertices[j] not in graph[vertices[i]]:
+                return False
+    return True
+
+
+def check_coloring(graph: dict, coloring: list) -> bool:
+    for color in coloring:
+        for i, vertex1 in enumerate(color):
+            for vertex2 in color[i+1:]: 
+                if vertex2 in graph[vertex1]:
+                    return False, color
+    return True
+
+
 if __name__ == '__main__':
 
     start_t = time.time()
 
-    graph, V, E = read_gragh_file(f'school1.col')
+    graph, V, E = read_gragh_file(f'miles1500.col')
+
+    print(graph)
     
     ext_graph = createExtGraph(graph, V)
 
-    colors, num_of_colors = find_max_clique(ext_graph)
+    print(ext_graph)
+
+    colors, num_of_colors = min_degree_clique(ext_graph)
 
     end_t = time.time()
 
@@ -104,3 +151,5 @@ if __name__ == '__main__':
     print(f"colors = {colors}, num_of_colors = {num_of_colors}")
 
     print(f"execution time = {execute_time}")
+
+    print(check_coloring(graph, colors))
